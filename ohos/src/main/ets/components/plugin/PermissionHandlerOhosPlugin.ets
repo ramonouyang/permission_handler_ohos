@@ -11,8 +11,6 @@ import {
   MethodResult,
 } from '@ohos/flutter_ohos';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
-import type { Permissions } from '@ohos.abilityAccessCtrl';
-import type { PermissionRequestResult } from '@ohos.abilityAccessCtrl';
 import bundleManager from '@ohos.bundle.bundleManager';
 import hilog from '@ohos.hilog';
 
@@ -34,7 +32,7 @@ const PERMISSION_PERMANENTLY_DENIED = 4;
  * HarmonyOS permission name mapping from Flutter permission enum values.
  * Flutter permission_handler uses integer values for permissions.
  */
-const PERMISSION_MAP: Map<number, Permissions> = new Map([
+const PERMISSION_MAP: Map<number, string> = new Map([
   [4, 'ohos.permission.CAMERA'],
   [7, 'ohos.permission.READ_MEDIA'],
   [8, 'ohos.permission.WRITE_MEDIA'],
@@ -123,7 +121,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         hilog.warn(0x0001, TAG, `Unknown permission enum: ${permissionEnum}`);
@@ -133,7 +131,10 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(tokenId, permissionName);
+      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(
+        tokenId,
+        permissionName as abilityAccessCtrl.Permissions
+      );
 
       result.success(grantStatus ? PERMISSION_GRANTED : PERMISSION_DENIED);
     } catch (e) {
@@ -147,7 +148,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         hilog.warn(0x0001, TAG, `Unknown permission enum: ${permissionEnum}`);
@@ -162,9 +163,11 @@ export default class PermissionHandlerOhosPlugin
       }
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-      const permissions: Array<Permissions> = [permissionName];
+      const permissions: Array<abilityAccessCtrl.Permissions> = [
+        permissionName as abilityAccessCtrl.Permissions
+      ];
 
-      const requestResult: PermissionRequestResult = await atManager.requestPermissionsFromUser(
+      const requestResult: abilityAccessCtrl.PermissionRequestResult = await atManager.requestPermissionsFromUser(
         moduleContext,
         permissions
       );
@@ -187,7 +190,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         result.success(false);
@@ -196,7 +199,10 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(tokenId, permissionName);
+      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(
+        tokenId,
+        permissionName as abilityAccessCtrl.Permissions
+      );
 
       result.success(grantStatus);
     } catch (e) {
