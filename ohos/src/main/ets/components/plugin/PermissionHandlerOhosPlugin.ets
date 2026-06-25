@@ -24,13 +24,9 @@ let moduleContext: Context | null = null;
  */
 const PERMISSION_DENIED = 0;
 const PERMISSION_GRANTED = 1;
-const PERMISSION_RESTRICTED = 2;
-const PERMISSION_LIMITED = 3;
-const PERMISSION_PERMANENTLY_DENIED = 4;
 
 /**
  * HarmonyOS permission name mapping from Flutter permission enum values.
- * Flutter permission_handler uses integer values for permissions.
  */
 const PERMISSION_MAP: Map<number, string> = new Map([
   [4, 'ohos.permission.CAMERA'],
@@ -131,10 +127,8 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(
-        tokenId,
-        permissionName as abilityAccessCtrl.Permissions
-      );
+      // Cast string to Permissions type for API call
+      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(tokenId, permissionName as Permissions);
 
       result.success(grantStatus ? PERMISSION_GRANTED : PERMISSION_DENIED);
     } catch (e) {
@@ -163,11 +157,10 @@ export default class PermissionHandlerOhosPlugin
       }
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-      const permissions: Array<abilityAccessCtrl.Permissions> = [
-        permissionName as abilityAccessCtrl.Permissions
-      ];
+      // Cast string to Permissions type for API call
+      const permissions: Array<Permissions> = [permissionName as Permissions];
 
-      const requestResult: abilityAccessCtrl.PermissionRequestResult = await atManager.requestPermissionsFromUser(
+      const requestResult = await atManager.requestPermissionsFromUser(
         moduleContext,
         permissions
       );
@@ -185,8 +178,6 @@ export default class PermissionHandlerOhosPlugin
   }
 
   private async handleCheckServiceStatus(call: MethodCall, result: MethodResult): Promise<void> {
-    // HarmonyOS doesn't have a direct equivalent for checking service status
-    // For now, we assume services are enabled if permission is granted
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
@@ -199,10 +190,7 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(
-        tokenId,
-        permissionName as abilityAccessCtrl.Permissions
-      );
+      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(tokenId, permissionName as Permissions);
 
       result.success(grantStatus);
     } catch (e) {
@@ -211,8 +199,6 @@ export default class PermissionHandlerOhosPlugin
   }
 
   private handleOpenAppSettings(result: MethodResult): void {
-    // Opening app settings is not directly supported in HarmonyOS NEXT
-    // The user needs to manually navigate to app settings
     hilog.warn(0x0001, TAG, 'openAppSettings not directly supported on HarmonyOS');
     result.success(false);
   }
