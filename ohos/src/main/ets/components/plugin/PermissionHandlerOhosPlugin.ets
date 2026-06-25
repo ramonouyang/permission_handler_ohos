@@ -32,7 +32,7 @@ const PERMISSION_PERMANENTLY_DENIED = 4;
  * HarmonyOS permission name mapping from Flutter permission enum values.
  * Flutter permission_handler uses integer values for permissions.
  */
-const PERMISSION_MAP: Map<number, string> = new Map([
+const PERMISSION_MAP: Map<number, abilityAccessCtrl.Permissions> = new Map([
   [4, 'ohos.permission.CAMERA'],
   [7, 'ohos.permission.READ_MEDIA'],
   [8, 'ohos.permission.WRITE_MEDIA'],
@@ -121,9 +121,9 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: string = this.getPermissionName(permissionEnum);
+      const permissionName: abilityAccessCtrl.Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
 
-      if (permissionName.length === 0) {
+      if (permissionName === undefined) {
         hilog.warn(0x0001, TAG, `Unknown permission enum: ${permissionEnum}`);
         result.success(PERMISSION_DENIED);
         return;
@@ -145,9 +145,9 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: string = this.getPermissionName(permissionEnum);
+      const permissionName: abilityAccessCtrl.Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
 
-      if (permissionName.length === 0) {
+      if (permissionName === undefined) {
         hilog.warn(0x0001, TAG, `Unknown permission enum: ${permissionEnum}`);
         result.success(PERMISSION_DENIED);
         return;
@@ -160,14 +160,14 @@ export default class PermissionHandlerOhosPlugin
       }
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-      const permissions: Array<string> = [permissionName];
+      const permissions: Array<abilityAccessCtrl.Permissions> = [permissionName];
 
-      const grantResults: Array<abilityAccessCtrl.GrantStatus> = await atManager.requestPermissionsFromUser(
-        moduleContext as abilityAccessCtrl.Context,
+      const requestResult: abilityAccessCtrl.PermissionRequestResult = await atManager.requestPermissionsFromUser(
+        moduleContext,
         permissions
       );
 
-      if (grantResults.length > 0 && grantResults[0]) {
+      if (requestResult.authResults.length > 0 && requestResult.authResults[0] === 0) {
         result.success(PERMISSION_GRANTED);
       } else {
         result.success(PERMISSION_DENIED);
@@ -185,9 +185,9 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: string = this.getPermissionName(permissionEnum);
+      const permissionName: abilityAccessCtrl.Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
 
-      if (permissionName.length === 0) {
+      if (permissionName === undefined) {
         result.success(false);
         return;
       }
@@ -207,11 +207,6 @@ export default class PermissionHandlerOhosPlugin
     // The user needs to manually navigate to app settings
     hilog.warn(0x0001, TAG, 'openAppSettings not directly supported on HarmonyOS');
     result.success(false);
-  }
-
-  private getPermissionName(permissionEnum: number): string {
-    const name: string | undefined = PERMISSION_MAP.get(permissionEnum);
-    return name || '';
   }
 
   private getAccessTokenId(): number {
