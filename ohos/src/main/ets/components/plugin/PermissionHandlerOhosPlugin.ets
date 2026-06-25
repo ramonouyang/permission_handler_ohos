@@ -14,10 +14,6 @@ import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import bundleManager from '@ohos.bundle.bundleManager';
 import hilog from '@ohos.hilog';
 
-// Import Permissions type from the permissions module
-import type { Permissions } from '@ohos.abilityAccessCtrl/permissions';
-import type { PermissionRequestResult } from '@ohos.abilityAccessCtrl/security/PermissionRequestResult';
-
 const TAG = 'PermissionHandlerOhos';
 const CHANNEL_NAME = 'plugins.flutter.io/permission_handler';
 
@@ -32,32 +28,32 @@ const PERMISSION_GRANTED = 1;
 /**
  * HarmonyOS permission name mapping from Flutter permission enum values.
  */
-const PERMISSION_MAP: Map<number, Permissions> = new Map([
-  [4, 'ohos.permission.CAMERA' as Permissions],
-  [7, 'ohos.permission.READ_MEDIA' as Permissions],
-  [8, 'ohos.permission.WRITE_MEDIA' as Permissions],
-  [14, 'ohos.permission.LOCATION' as Permissions],
-  [15, 'ohos.permission.APPROXIMATELY_LOCATION' as Permissions],
-  [16, 'ohos.permission.LOCATION_IN_BACKGROUND' as Permissions],
-  [23, 'ohos.permission.MICROPHONE' as Permissions],
-  [27, 'ohos.permission.READ_CALENDAR' as Permissions],
-  [28, 'ohos.permission.WRITE_CALENDAR' as Permissions],
-  [31, 'ohos.permission.READ_CONTACTS' as Permissions],
-  [32, 'ohos.permission.WRITE_CONTACTS' as Permissions],
-  [36, 'ohos.permission.SEND_MESSAGES' as Permissions],
-  [37, 'ohos.permission.RECEIVE_SMS' as Permissions],
-  [38, 'ohos.permission.READ_SMS' as Permissions],
-  [40, 'ohos.permission.READ_PHONE_NUMBERS' as Permissions],
-  [41, 'ohos.permission.ANSWER_PHONE_CALLS' as Permissions],
-  [44, 'ohos.permission.BLUETOOTH' as Permissions],
-  [49, 'ohos.permission.READ_IMAGEVIDEO' as Permissions],
-  [50, 'ohos.permission.WRITE_IMAGEVIDEO' as Permissions],
-  [51, 'ohos.permission.READ_AUDIO' as Permissions],
-  [52, 'ohos.permission.WRITE_AUDIO' as Permissions],
-  [53, 'ohos.permission.READ_DOCUMENT' as Permissions],
-  [54, 'ohos.permission.WRITE_DOCUMENT' as Permissions],
-  [55, 'ohos.permission.READ_WHOLE_CALENDAR' as Permissions],
-  [56, 'ohos.permission.WRITE_WHOLE_CALENDAR' as Permissions],
+const PERMISSION_MAP: Map<number, string> = new Map([
+  [4, 'ohos.permission.CAMERA'],
+  [7, 'ohos.permission.READ_MEDIA'],
+  [8, 'ohos.permission.WRITE_MEDIA'],
+  [14, 'ohos.permission.LOCATION'],
+  [15, 'ohos.permission.APPROXIMATELY_LOCATION'],
+  [16, 'ohos.permission.LOCATION_IN_BACKGROUND'],
+  [23, 'ohos.permission.MICROPHONE'],
+  [27, 'ohos.permission.READ_CALENDAR'],
+  [28, 'ohos.permission.WRITE_CALENDAR'],
+  [31, 'ohos.permission.READ_CONTACTS'],
+  [32, 'ohos.permission.WRITE_CONTACTS'],
+  [36, 'ohos.permission.SEND_MESSAGES'],
+  [37, 'ohos.permission.RECEIVE_SMS'],
+  [38, 'ohos.permission.READ_SMS'],
+  [40, 'ohos.permission.READ_PHONE_NUMBERS'],
+  [41, 'ohos.permission.ANSWER_PHONE_CALLS'],
+  [44, 'ohos.permission.BLUETOOTH'],
+  [49, 'ohos.permission.READ_IMAGEVIDEO'],
+  [50, 'ohos.permission.WRITE_IMAGEVIDEO'],
+  [51, 'ohos.permission.READ_AUDIO'],
+  [52, 'ohos.permission.WRITE_AUDIO'],
+  [53, 'ohos.permission.READ_DOCUMENT'],
+  [54, 'ohos.permission.WRITE_DOCUMENT'],
+  [55, 'ohos.permission.READ_WHOLE_CALENDAR'],
+  [56, 'ohos.permission.WRITE_WHOLE_CALENDAR'],
 ]);
 
 /**
@@ -121,7 +117,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         hilog.warn(0x0001, TAG, `Unknown permission enum: ${permissionEnum}`);
@@ -131,7 +127,7 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(tokenId, permissionName);
+      const grantStatus: boolean = await atManager.checkAccessToken(tokenId, permissionName);
 
       result.success(grantStatus ? PERMISSION_GRANTED : PERMISSION_DENIED);
     } catch (e) {
@@ -145,7 +141,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         hilog.warn(0x0001, TAG, `Unknown permission enum: ${permissionEnum}`);
@@ -160,9 +156,9 @@ export default class PermissionHandlerOhosPlugin
       }
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-      const permissions: Array<Permissions> = [permissionName];
+      const permissions: string[] = [permissionName];
 
-      const requestResult: PermissionRequestResult = await atManager.requestPermissionsFromUser(
+      const requestResult = await atManager.requestPermissionsFromUser(
         moduleContext,
         permissions
       );
@@ -183,7 +179,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         result.success(false);
@@ -192,7 +188,7 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus: abilityAccessCtrl.GrantStatus = await atManager.checkAccessToken(tokenId, permissionName);
+      const grantStatus: boolean = await atManager.checkAccessToken(tokenId, permissionName);
 
       result.success(grantStatus);
     } catch (e) {
