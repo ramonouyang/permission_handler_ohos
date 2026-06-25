@@ -1,1 +1,2 @@
-export { default as PermissionHandlerOhosPlugin } from './components/plugin/PermissionHandlerOhosPlugin';
+import PermissionHandlerOhosPlugin from './src/main/ets/components/plugin/PermissionHandlerOhosPlugin';
+export default PermissionHandlerOhosPlugin;
