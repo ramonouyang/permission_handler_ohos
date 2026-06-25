@@ -11,6 +11,7 @@ import {
   MethodResult,
 } from '@ohos/flutter_ohos';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import type { Permissions, PermissionRequestResult } from '@ohos.abilityAccessCtrl';
 import bundleManager from '@ohos.bundle.bundleManager';
 import hilog from '@ohos.hilog';
 
@@ -22,39 +23,27 @@ let moduleContext: Context | null = null;
 const PERMISSION_DENIED = 0;
 const PERMISSION_GRANTED = 1;
 
-const PERMISSION_MAP: Map<number, string> = new Map([
-  [4, 'ohos.permission.CAMERA'],
-  [7, 'ohos.permission.READ_MEDIA'],
-  [8, 'ohos.permission.WRITE_MEDIA'],
-  [14, 'ohos.permission.LOCATION'],
-  [15, 'ohos.permission.APPROXIMATELY_LOCATION'],
-  [16, 'ohos.permission.LOCATION_IN_BACKGROUND'],
-  [23, 'ohos.permission.MICROPHONE'],
-  [27, 'ohos.permission.READ_CALENDAR'],
-  [28, 'ohos.permission.WRITE_CALENDAR'],
-  [31, 'ohos.permission.READ_CONTACTS'],
-  [32, 'ohos.permission.WRITE_CONTACTS'],
-  [44, 'ohos.permission.BLUETOOTH'],
-  [49, 'ohos.permission.READ_IMAGEVIDEO'],
-  [50, 'ohos.permission.WRITE_IMAGEVIDEO'],
-  [51, 'ohos.permission.READ_AUDIO'],
-  [52, 'ohos.permission.WRITE_AUDIO'],
-  [53, 'ohos.permission.READ_DOCUMENT'],
-  [54, 'ohos.permission.WRITE_DOCUMENT'],
+const PERMISSION_MAP: Map<number, Permissions> = new Map([
+  [4, 'ohos.permission.CAMERA' as Permissions],
+  [7, 'ohos.permission.READ_MEDIA' as Permissions],
+  [8, 'ohos.permission.WRITE_MEDIA' as Permissions],
+  [14, 'ohos.permission.LOCATION' as Permissions],
+  [15, 'ohos.permission.APPROXIMATELY_LOCATION' as Permissions],
+  [16, 'ohos.permission.LOCATION_IN_BACKGROUND' as Permissions],
+  [23, 'ohos.permission.MICROPHONE' as Permissions],
+  [27, 'ohos.permission.READ_CALENDAR' as Permissions],
+  [28, 'ohos.permission.WRITE_CALENDAR' as Permissions],
+  [31, 'ohos.permission.READ_CONTACTS' as Permissions],
+  [32, 'ohos.permission.WRITE_CONTACTS' as Permissions],
+  [44, 'ohos.permission.BLUETOOTH' as Permissions],
+  [49, 'ohos.permission.READ_IMAGEVIDEO' as Permissions],
+  [50, 'ohos.permission.WRITE_IMAGEVIDEO' as Permissions],
+  [51, 'ohos.permission.READ_AUDIO' as Permissions],
+  [52, 'ohos.permission.WRITE_AUDIO' as Permissions],
+  [53, 'ohos.permission.READ_DOCUMENT' as Permissions],
+  [54, 'ohos.permission.WRITE_DOCUMENT' as Permissions],
 ]);
 
-/**
- * Cast a permission string name to the Permissions type required by the API.
- * ArkTS does not allow direct `as Permissions` from string, but
- * going through `object` first bypasses the literal-union check.
- */
-function toPermissions(name: string): abilityAccessCtrl.Permissions {
-  return name as object as abilityAccessCtrl.Permissions;
-}
-
-/**
- * HarmonyOS NEXT implementation of permission_handler.
- */
 export default class PermissionHandlerOhosPlugin
   implements FlutterPlugin, MethodCallHandler, AbilityAware {
   private channel: MethodChannel | null = null;
@@ -113,7 +102,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         hilog.warn(0x0001, TAG, `Unknown permission enum: ${permissionEnum}`);
@@ -123,7 +112,7 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus = await atManager.checkAccessToken(tokenId, toPermissions(permissionName));
+      const grantStatus = await atManager.checkAccessToken(tokenId, permissionName);
 
       result.success(grantStatus ? PERMISSION_GRANTED : PERMISSION_DENIED);
     } catch (e) {
@@ -137,7 +126,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         hilog.warn(0x0001, TAG, `Unknown permission enum: ${permissionEnum}`);
@@ -152,7 +141,7 @@ export default class PermissionHandlerOhosPlugin
       }
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-      const permissions = [toPermissions(permissionName)];
+      const permissions: Array<Permissions> = [permissionName];
 
       // Use callback-style to avoid overload ambiguity
       atManager.requestPermissionsFromUser(moduleContext, permissions, (err, requestResult) => {
@@ -178,7 +167,7 @@ export default class PermissionHandlerOhosPlugin
     try {
       const args: Record<string, Object> = call.args as Record<string, Object>;
       const permissionEnum: number = args.permission as number;
-      const permissionName: string | undefined = PERMISSION_MAP.get(permissionEnum);
+      const permissionName: Permissions | undefined = PERMISSION_MAP.get(permissionEnum);
 
       if (permissionName === undefined) {
         result.success(false);
@@ -187,7 +176,7 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus = await atManager.checkAccessToken(tokenId, toPermissions(permissionName));
+      const grantStatus = await atManager.checkAccessToken(tokenId, permissionName);
 
       result.success(grantStatus ? true : false);
     } catch (e) {
