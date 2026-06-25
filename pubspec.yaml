@@ -1,0 +1,35 @@
+name: permission_handler_ohos
+description: HarmonyOS NEXT implementation of Flutter's permission_handler plugin. Manages runtime permissions for camera, storage, location, etc.
+version: 0.1.0
+homepage: https://github.com/ramonouyang/permission_handler_ohos
+repository: https://github.com/ramonouyang/permission_handler_ohos
+issue_tracker: https://github.com/ramonouyang/permission_handler_ohos/issues
+topics:
+  - permission
+  - permission-handler
+  - harmonyos
+  - ohos
+  - security
+
+environment:
+  sdk: '>=3.4.4 <4.0.0'
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  permission_handler_platform_interface: ^4.2.0
+  plugin_platform_interface: ^2.1.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  plugin:
+    implements: permission_handler
+    platforms:
+      ohos:
+        dartPluginClass: PermissionHandlerOhos
+        pluginClass: PermissionHandlerOhosPlugin
