@@ -19,15 +19,9 @@ const CHANNEL_NAME = 'plugins.flutter.io/permission_handler';
 
 let moduleContext: Context | null = null;
 
-/**
- * Permission status constants (matching Dart side).
- */
 const PERMISSION_DENIED = 0;
 const PERMISSION_GRANTED = 1;
 
-/**
- * HarmonyOS permission name mapping from Flutter permission enum values.
- */
 const PERMISSION_MAP: Map<number, string> = new Map([
   [4, 'ohos.permission.CAMERA'],
   [7, 'ohos.permission.READ_MEDIA'],
@@ -40,11 +34,6 @@ const PERMISSION_MAP: Map<number, string> = new Map([
   [28, 'ohos.permission.WRITE_CALENDAR'],
   [31, 'ohos.permission.READ_CONTACTS'],
   [32, 'ohos.permission.WRITE_CONTACTS'],
-  [36, 'ohos.permission.SEND_MESSAGES'],
-  [37, 'ohos.permission.RECEIVE_SMS'],
-  [38, 'ohos.permission.READ_SMS'],
-  [40, 'ohos.permission.READ_PHONE_NUMBERS'],
-  [41, 'ohos.permission.ANSWER_PHONE_CALLS'],
   [44, 'ohos.permission.BLUETOOTH'],
   [49, 'ohos.permission.READ_IMAGEVIDEO'],
   [50, 'ohos.permission.WRITE_IMAGEVIDEO'],
@@ -52,9 +41,16 @@ const PERMISSION_MAP: Map<number, string> = new Map([
   [52, 'ohos.permission.WRITE_AUDIO'],
   [53, 'ohos.permission.READ_DOCUMENT'],
   [54, 'ohos.permission.WRITE_DOCUMENT'],
-  [55, 'ohos.permission.READ_WHOLE_CALENDAR'],
-  [56, 'ohos.permission.WRITE_WHOLE_CALENDAR'],
 ]);
+
+/**
+ * Cast a permission string name to the Permissions type required by the API.
+ * ArkTS does not allow direct `as Permissions` from string, but
+ * going through `object` first bypasses the literal-union check.
+ */
+function toPermissions(name: string): abilityAccessCtrl.Permissions {
+  return name as object as abilityAccessCtrl.Permissions;
+}
 
 /**
  * HarmonyOS NEXT implementation of permission_handler.
@@ -127,7 +123,7 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus: boolean = await atManager.checkAccessToken(tokenId, permissionName);
+      const grantStatus = await atManager.checkAccessToken(tokenId, toPermissions(permissionName));
 
       result.success(grantStatus ? PERMISSION_GRANTED : PERMISSION_DENIED);
     } catch (e) {
@@ -156,18 +152,21 @@ export default class PermissionHandlerOhosPlugin
       }
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
-      const permissions: string[] = [permissionName];
+      const permissions = [toPermissions(permissionName)];
 
-      const requestResult = await atManager.requestPermissionsFromUser(
-        moduleContext,
-        permissions
-      );
-
-      if (requestResult.authResults.length > 0 && requestResult.authResults[0] === 0) {
-        result.success(PERMISSION_GRANTED);
-      } else {
-        result.success(PERMISSION_DENIED);
-      }
+      // Use callback-style to avoid overload ambiguity
+      atManager.requestPermissionsFromUser(moduleContext, permissions, (err, requestResult) => {
+        if (err) {
+          hilog.error(0x0001, TAG, `requestPermission callback error: ${err.message}`);
+          result.success(PERMISSION_DENIED);
+          return;
+        }
+        if (requestResult.authResults.length > 0 && requestResult.authResults[0] === 0) {
+          result.success(PERMISSION_GRANTED);
+        } else {
+          result.success(PERMISSION_DENIED);
+        }
+      });
     } catch (e) {
       const err: Error = e as Error;
       hilog.error(0x0001, TAG, `requestPermission error: ${err.message}`);
@@ -188,9 +187,9 @@ export default class PermissionHandlerOhosPlugin
 
       const atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
       const tokenId: number = this.getAccessTokenId();
-      const grantStatus: boolean = await atManager.checkAccessToken(tokenId, permissionName);
+      const grantStatus = await atManager.checkAccessToken(tokenId, toPermissions(permissionName));
 
-      result.success(grantStatus);
+      result.success(grantStatus ? true : false);
     } catch (e) {
       result.success(false);
     }
